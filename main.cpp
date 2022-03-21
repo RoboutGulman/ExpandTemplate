@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[])
 {
-    bohr_ini();
+    InitBohr();
  /*   add_string_to_bohr("abc");
     add_string_to_bohr("bcdc");
     add_string_to_bohr("cccb");
@@ -32,10 +32,14 @@ int main(int argc, char* argv[])
     add_string_to_bohr("bb");
     add_string_to_bohr("c");
     add_string_to_bohr("cc");*/
-    std::string const tpl = "a";
-    std::map<std::string, std::string> params;
-    params["a"] = "b";
-    add_string_to_bohr("a"); 
+    std::string const tpl = "abba";
+    Dictionary params;
+    params["a"] = "ab";
+    params["bba"] = "z";
+    //params["b"] = "c";
+    AddStringToBohr("a"); 
+    AddStringToBohr("bba");
+    //add_string_to_bohr("b");
     auto result = ExpandTemplate(tpl, params);
     std::cout << result << std::endl;
 /*  auto result = find_all_pos("abcde");
