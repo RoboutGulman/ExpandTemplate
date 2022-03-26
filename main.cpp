@@ -2,37 +2,97 @@
 //
 
 #include <iostream>
+#include <string>
+#include <fstream>
 #include <vector>
 #include <map>
 #include "Expand.h"
 
+struct Files
+{
+	std::ifstream input;
+	std::ofstream output;
+};
+
+void AddParamsToBohr(Dictionary params)
+{
+    Dictionary::iterator it = params.begin();
+
+    for (; it != params.end(); it++)
+    {
+        AddStringToBohr(it->first);
+    }
+}
+
+std::optional<Files> OpenFiles(std::string inputFileName, std::string outputFileName)
+{
+	Files files;
+	//Открываем входной файл
+	files.input.open(inputFileName);
+	if (!files.input.is_open())
+	{
+		std::cout << "Failed to open '" << inputFileName << "' for reading\n";
+		return std::nullopt;
+	}
+	//Открываем выходной файл
+	files.output.open(outputFileName);
+	if (!files.output.is_open())
+	{
+		std::cout << "Failed to open '" << outputFileName << "' for writing\n";
+		return std::nullopt;
+	}
+	return files;
+}
+
+bool ExpandTemplatesInFile(std::string inputFileName, std::string outputFileName, Dictionary params)
+{
+	std::cout << "start" << std::endl;
+	std::ifstream input;
+	std::ofstream output;
+	input.open(inputFileName);
+	output.open(outputFileName);
+	std::string buffer;
+	while (getline(input, buffer))
+	{
+		std::cout << buffer << std::endl;
+		output<< ExpandTemplate(buffer, params) << std::endl;
+	}
+
+	if (input.bad())
+	{
+		std::cout << "Failed to read data from input file\n";
+		return false;
+	}
+
+	if (!output.flush())
+	{
+		std::cout << "Failed to write data to output file\n";
+		return false;
+	}
+	return true;
+}
+
 int main(int argc, char* argv[])
 {
+    setlocale(0, "");
+
+    auto args = ParseArgs(argc, argv);
+	if (!args)
+	{
+		return 1;
+	}
+
     InitBohr();
- /*   add_string_to_bohr("abc");
-    add_string_to_bohr("bcdc");
-    add_string_to_bohr("cccb");
-    add_string_to_bohr("bcdd");
-    add_string_to_bohr("bbbc");
-    auto result = find_all_pos("abcdcbcddbbbcccbbbcccbb");*/
- /*   add_string_to_bohr("a");
-    add_string_to_bohr("ab");
-    add_string_to_bohr("abc");
-    std::string const tpl = "aabbccccabc";
-    std::map<std::string, std::string> params;
-    params["a"] = "b";
-    params["aa"] = "xx";
-    params["b"] = "w";
-    params["bb"] = "yy";
-    params["c"] = "d";
-    params["cc"] = "pp";
-    add_string_to_bohr("a");
-    add_string_to_bohr("aa");
-    add_string_to_bohr("b");
-    add_string_to_bohr("bb");
-    add_string_to_bohr("c");
-    add_string_to_bohr("cc");*/
-    std::string const tpl = "abba";
+
+	AddParamsToBohr(args->params);
+
+	if (!ExpandTemplatesInFile(args->inputFileName, args->outputFileName, args->params))
+	{
+		return 1;
+	}
+
+	return 0;
+ /*   std::string const tpl = "abba";
     Dictionary params;
     params["a"] = "ab";
     params["bba"] = "z";
@@ -41,7 +101,7 @@ int main(int argc, char* argv[])
     AddStringToBohr("bba");
     //add_string_to_bohr("b");
     auto result = ExpandTemplate(tpl, params);
-    std::cout << result << std::endl;
+    std::cout << result << std::endl;*/
 /*  auto result = find_all_pos("abcde");
     for (int i = 0; i < result.size(); i++)
     {

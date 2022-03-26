@@ -5,7 +5,7 @@
 
 const int ALPHABET_SIZE = 95;//26
 
-const char START_SYMBOL = ' '; //'a'
+const char START_ALPHABET_SYMBOL = ' '; //'a'
 
 struct bohr_vrtx
 {
@@ -42,10 +42,7 @@ void AddStringToBohr(const std::string &s)
     int num = 0; //начинаем с корня
     for (int i = 0; i < s.length(); i++)
     {
-        //тут можно сделать поддержку заглавных букв
-        std::cout << s[i] << ' ' << (int)s[i] << ' ';
-        char ch = s[i] - START_SYMBOL; //получаем номер в алфавите
-        std::cout << (int)ch << std::endl;
+        char ch = s[i] - START_ALPHABET_SYMBOL; //получаем номер в алфавите
         if (bohr[num].next_vrtx[ch] == -1)
         { //-1 - признак отсутствия ребра
             bohr.push_back(MakeBohrVertex(num, ch));
@@ -62,7 +59,7 @@ bool IsStringInBohr(const std::string &s)
     int num = 0;
     for (int i = 0; i < s.length(); i++)
     {
-        char ch = s[i] - START_SYMBOL;
+        char ch = s[i] - START_ALPHABET_SYMBOL;
         if (bohr[num].next_vrtx[ch] == -1)
         {
             return false;
@@ -134,7 +131,7 @@ void FindAllPos(const std::string &s, std::vector<EntryPointAndSubstring> &resul
     int u = 0;
     for (int i = 0; i < s.length(); i++)
     {
-        u = GetAutoMove(u, s[i] - START_SYMBOL);
+        u = GetAutoMove(u, s[i] - START_ALPHABET_SYMBOL);
         Check(u, i + 1, result);
     }
 }
