@@ -2,20 +2,20 @@
 #include <iostream>
 #include <map>
 #include <vector>
-
-std::string ExpandTemplate(std::string const &tpl, Dictionary const &params)
+//разбить функцию на логические части
+std::string ExpandTemplate(std::string const &tpl, const Dictionary &params)
 {
     std::string result = tpl;
     std::vector<bool> wasChanged(tpl.length(), false);
-    std::vector<EntryPointAndSubstring> entry;
-    FindAllPos(tpl, entry);
+    std::vector<EntryPointAndSubstring> entryPoints;
+    FindAllPos(tpl, entryPoints);
     int delta = 0;
-    for (int i = 0; i < entry.size(); i++)
+    for (int i = 0; i < entryPoints.size(); i++)
     {
         //делаем проверку, меняем ли мы уже изменённые символы
-        int start = entry[i].first-1;
+        int start = entryPoints[i].first;
         bool reModification = false;
-        for (int j = 0; j <= entry[i].second.length(); j++)
+        for (int j = 0; j < entryPoints[i].second.length(); j++)
         {
             if ((j < wasChanged.size() - start) && (wasChanged[j + start] == true))
             {
@@ -25,21 +25,22 @@ std::string ExpandTemplate(std::string const &tpl, Dictionary const &params)
         }
         if (reModification)
         {
-            break;
+            continue;
         }
-        for (int j = 0; j <= entry[i].second.length(); j++)
+        for (int j = 0; j < entryPoints[i].second.length(); j++)
         {
             if (j < wasChanged.size() - start)
             {
-                wasChanged[j+start]=true;
+                wasChanged[j + start] = true;
             }
         }
-        start = entry[i].first+delta-1;
-        result.erase(result.begin()+start, result.begin() + start+entry[i].second.length());
-        Dictionary::const_iterator iter = params.find(entry[i].second);
-        if (iter != params.end()) {
+        start = entryPoints[i].first + delta;
+        result.erase(result.begin() + start, result.begin() + start + entryPoints[i].second.length());
+        Dictionary::const_iterator iter = params.find(entryPoints[i].second);
+        if (iter != params.end())
+        {
             result.insert(start, iter->second);
-            delta = iter->second.length() - entry[i].second.length();
+            delta += iter->second.length() - entryPoints[i].second.length();
         }
     }
     return result;

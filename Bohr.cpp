@@ -3,32 +3,42 @@
 #include <map>
 #include <vector>
 
-const int ALPHABET_SIZE = 95;//26
+const int ALPHABET_SIZE = 95; // 26
 
 const char START_ALPHABET_SYMBOL = ' '; //'a'
 
-struct bohr_vrtx
+struct BohrVertex
 {
-    int next_vrtx[ALPHABET_SIZE], pat_num, suff_link, auto_move[ALPHABET_SIZE], par, suff_flink;
+    int nextVertex[ALPHABET_SIZE], patternNumber, suffixLink, autoMove[ALPHABET_SIZE], parrent, suffixFineLink;
     bool flag;
-    char symb;
+    char symbol;
 };
 
-std::vector<bohr_vrtx> bohr;
+std::vector<BohrVertex> bohr;
 std::vector<std::string> pattern;
 
-bohr_vrtx MakeBohrVertex(int p, char c)
+void AddParamsToBohr(Dictionary params)
+{
+    for (auto it = params.begin(); it != params.end(); it++)
+    {
+        AddStringToBohr(it->first);
+    }
+}
+
+//переименовать аргументы
+BohrVertex MakeBohrVertex(int parent, char symbol)
 { //передаем номер отца и символ на ребре в боре
-    bohr_vrtx v;
+    BohrVertex vertex;
     //(255)=(2^8-1)=(все единицы в каждом байте памяти)=(-1 в дополнительном коде целого 4-байтного числа int)
-    memset(v.next_vrtx, 255, sizeof(v.next_vrtx));
-    memset(v.auto_move, 255, sizeof(v.auto_move));
-    v.flag = false;
-    v.suff_link = -1;
-    v.par = p;
-    v.symb = c;
-    v.suff_flink = -1;
-    return v;
+    //убрать memset, самому выделять количество
+    memset(vertex.nextVertex, 255, sizeof(vertex.nextVertex));
+    memset(vertex.autoMove, 255, sizeof(vertex.autoMove));
+    vertex.flag = false;
+    vertex.suffixLink = -1;
+    vertex.parrent = parent;
+    vertex.symbol = symbol;
+    vertex.suffixFineLink = -1;
+    return vertex;
 }
 
 void InitBohr()
@@ -37,92 +47,103 @@ void InitBohr()
     bohr.clear();
     bohr.push_back(MakeBohrVertex(0, '$'));
 }
+
 void AddStringToBohr(const std::string &s)
 {
     int num = 0; //начинаем с корня
     for (int i = 0; i < s.length(); i++)
     {
         char ch = s[i] - START_ALPHABET_SYMBOL; //получаем номер в алфавите
-        if (bohr[num].next_vrtx[ch] == -1)
+        if (bohr[num].nextVertex[ch] == -1)
         { //-1 - признак отсутствия ребра
             bohr.push_back(MakeBohrVertex(num, ch));
-            bohr[num].next_vrtx[ch] = bohr.size() - 1;
+            bohr[num].nextVertex[ch] = bohr.size() - 1;
         }
-        num = bohr[num].next_vrtx[ch];
+        num = bohr[num].nextVertex[ch];
     }
     bohr[num].flag = true;
     pattern.push_back(s);
-    bohr[num].pat_num = pattern.size() - 1;
+    bohr[num].patternNumber = pattern.size() - 1;
 }
+
 bool IsStringInBohr(const std::string &s)
 {
     int num = 0;
     for (int i = 0; i < s.length(); i++)
     {
         char ch = s[i] - START_ALPHABET_SYMBOL;
-        if (bohr[num].next_vrtx[ch] == -1)
+        if (bohr[num].nextVertex[ch] == -1)
         {
             return false;
         }
-        num = bohr[num].next_vrtx[ch];
+        num = bohr[num].nextVertex[ch];
     }
     return true;
 }
+//вынести в самый верх
 int GetAutoMove(int v, char ch);
-
+//переименовать функцию
 int GetSuffLink(int v)
 {
-    if (bohr[v].suff_link == -1)        //если еще не считали
-        if (v == 0 || bohr[v].par == 0) //если v - корень или предок v - корень
-            bohr[v].suff_link = 0;
+    //инвертировать внешний if
+    if (bohr[v].suffixLink == -1)           //если еще не считали
+        if (v == 0 || bohr[v].parrent == 0) //если v - корень или предок v - корень
+            bohr[v].suffixLink = 0;
         else
-            bohr[v].suff_link = GetAutoMove(GetSuffLink(bohr[v].par), bohr[v].symb);
-    return bohr[v].suff_link;
+            bohr[v].suffixLink = GetAutoMove(GetSuffLink(bohr[v].parrent), bohr[v].symbol);
+    return bohr[v].suffixLink;
 }
-
+//добавить фигурные скобки
 int GetAutoMove(int v, char ch)
 {
-    if (bohr[v].auto_move[ch] == -1)
-        if (bohr[v].next_vrtx[ch] != -1)
-            bohr[v].auto_move[ch] = bohr[v].next_vrtx[ch];
+    //инвертировать внешний if
+    if (bohr[v].autoMove[ch] == -1)
+        if (bohr[v].nextVertex[ch] != -1)
+            bohr[v].autoMove[ch] = bohr[v].nextVertex[ch];
         else if (v == 0)
-            bohr[v].auto_move[ch] = 0;
+            bohr[v].autoMove[ch] = 0;
         else
-            bohr[v].auto_move[ch] = GetAutoMove(GetSuffLink(v), ch);
-    return bohr[v].auto_move[ch];
+            bohr[v].autoMove[ch] = GetAutoMove(GetSuffLink(v), ch);
+    return bohr[v].autoMove[ch];
 }
+
+//вопрос: как получаются Fine Suff Link
 int GetSuffFlink(int v)
 {
-    if (bohr[v].suff_flink == -1)
+    if (bohr[v].suffixFineLink == -1)
     {
         int u = GetSuffLink(v);
         if (u == 0) //либо v - корень, либо суф. ссылка v указывает на корень
         {
-            bohr[v].suff_flink = 0;
+            bohr[v].suffixFineLink = 0;
         }
         else
         {
-            bohr[v].suff_flink = (bohr[u].flag) ? u : GetSuffFlink(u);
+            bohr[v].suffixFineLink = (bohr[u].flag) ? u : GetSuffFlink(u);
         }
     }
-    return bohr[v].suff_flink;
+    return bohr[v].suffixFineLink;
 }
+//изменить название функции, чтобы понять, что мы проверяем
 void Check(int v, int i, std::vector<EntryPointAndSubstring> &result)
 {
     for (int u = v; u != 0; u = GetSuffFlink(u))
     {
-        if (bohr[u].flag)
+        //понизить уровень вложенности
+        if (!bohr[u].flag)
         {
-            if (!result.empty())
-            {
-                auto point = result[result.size() - 1];
-                if (point.first == i - pattern[bohr[u].pat_num].length() + 1)
-                {
-                    result.pop_back();
-                }
-            }
-            result.push_back(std::make_pair(i - pattern[bohr[u].pat_num].length() + 1, pattern[bohr[u].pat_num]));
+            continue;
         }
+        if (!result.empty())
+        {
+            auto point = result[result.size() - 1];
+            if (point.first == i - pattern[bohr[u].patternNumber].length() )
+            {
+                result.pop_back();
+            }
+        }
+        result.push_back(
+            std::make_pair(i - pattern[bohr[u].patternNumber].length(), pattern[bohr[u].patternNumber]));
     }
 }
 
